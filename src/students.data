@@ -1,0 +1,30 @@
+[
+  {
+    "id": "709886",
+    "name": "test",
+    "email": "test@university.com",
+    "password": "Zkxnb12345",
+    "subjects": [
+      {
+        "id": "733",
+        "mark": 82,
+        "grade": "D"
+      },
+      {
+        "id": "038",
+        "mark": 85,
+        "grade": "HD"
+      },
+      {
+        "id": "142",
+        "mark": 38,
+        "grade": "Z"
+      },
+      {
+        "id": "463",
+        "mark": 78,
+        "grade": "D"
+      }
+    ]
+  }
+]
