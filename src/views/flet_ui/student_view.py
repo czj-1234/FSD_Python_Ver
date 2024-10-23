@@ -39,10 +39,52 @@ class StudentView(BaseView):
             self._refresh_subjects()
 
         def handle_remove(e):
-            subject_id = self.get_input("Enter subject ID to remove")
-            if subject_id:
-                if self.subject_controller.remove_subject():
-                    self._refresh_subjects()
+            if not self.current_student.subjects:
+                self.display_error("No subjects to remove!")
+                return
+
+            def handle_cancel(e):
+                dlg.open = False
+                self.page.update()
+
+            def handle_remove_confirm(e):
+                dlg.open = False
+                subject_id = text_field.value
+                if subject_id:
+                    if self.current_student.remove_subject(subject_id):
+                        if self.subject_controller.database.update_student(self.current_student):
+                            self.display_success(f"Subject {subject_id} removed successfully!")
+                            self._refresh_subjects()
+                        else:
+                            self.display_error("Failed to update database!")
+                    else:
+                        self.display_error(f"Subject {subject_id} not found!")
+                self.page.update()
+
+            text_field = ft.TextField(
+                label="Subject ID",
+                hint_text="Enter subject ID to remove"
+            )
+
+            dlg = ft.AlertDialog(
+                title=ft.Text("Remove Subject"),
+                content=ft.Column([
+                    ft.Text("Currently enrolled subjects:"),
+                    ft.Column([
+                        ft.Text(f"ID: {subject.id}, Grade: {subject.grade}, Mark: {subject.mark:.1f}")
+                        for subject in self.current_student.subjects
+                    ]),
+                    text_field
+                ]),
+                actions=[
+                    ft.TextButton("Cancel", on_click=handle_cancel),
+                    ft.TextButton("Remove", on_click=handle_remove_confirm),
+                ],
+            )
+
+            self.page.dialog = dlg
+            dlg.open = True
+            self.page.update()
 
         def handle_change_password(e):
             new_password = self.get_input("Enter new password")
