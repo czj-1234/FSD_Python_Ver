@@ -1,6 +1,6 @@
 # FSD_Python_Ver
 
-> FSD 作业的 75% 实现，目前 CLI 完全可用，GUI 还有一点小问题，在 Debug阶段
+> FSD 作业的 75% 实现，目前 CLI 完全可用，GUI 还有一点小问题，在 Debug 阶段
 
 ## 架构说明
 
@@ -10,9 +10,7 @@
 
   - Controller - CLI & GUI 共用
 
-  - View - CLI
-
-             - GUI -> Flet UI 框架
+  - View - CLI 常规命令行操作 / GUI 使用 Flet UI 框架
 
 ## 环境需求
 
