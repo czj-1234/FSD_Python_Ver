@@ -50,7 +50,7 @@ class LoginView(BaseView):
         )
         self.admin_button = ft.TextButton(
             text="Admin Access",
-            on_click=self.handle_admin
+            on_click=lambda _: self.app_view.navigate_to_admin()
         )
 
     def switch_mode(self, e=None):
@@ -74,37 +74,62 @@ class LoginView(BaseView):
         """Handle form submission."""
         if self.is_register_mode:
             if self._handle_register():
-                # Successfully registered, switch to login mode
                 self.switch_mode()
         else:
             self._handle_login()
 
-    def handle_admin(self, e):
-        """Handle admin access."""
-        self.app_view.navigate_to_admin()
-
     def display(self, data=None):
         """Display the login view."""
-        # Clear any existing content
-        self.page.clean()
-
-        # Create layout
-        self.page.add(
-            ft.Column(
-                controls=[
-                    self.mode_text,
-                    self.name_field,
-                    self.email_field,
-                    self.password_field,
-                    self.submit_button,
-                    self.mode_button,
-                    ft.Divider(),
-                    self.admin_button,
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=20
-            )
+        # Create main content
+        content = ft.Column(
+            controls=[
+                ft.Container(
+                    content=self.mode_text,
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            self.name_field,
+                            self.email_field,
+                            self.password_field,
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=10,
+                    ),
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(
+                    content=self.submit_button,
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(
+                    content=self.mode_button,
+                    alignment=ft.alignment.center,
+                ),
+                ft.Divider(),
+                ft.Container(
+                    content=self.admin_button,
+                    alignment=ft.alignment.center,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=20,
         )
+
+        # Update main container content
+        if hasattr(self.app_view, 'main_container'):
+            self.app_view.main_container.content = ft.Container(
+                content=content,
+                width=400,  # Set a fixed width for the login form
+                padding=20,
+                alignment=ft.alignment.center,
+            )
+        else:
+            self.page.clean()
+            self.page.add(content)
+
+        self.page.update()
 
     def _handle_login(self):
         """Handle login form submission."""
@@ -171,18 +196,3 @@ class LoginView(BaseView):
     def confirm_action(self, message: str) -> bool:
         """Get user confirmation."""
         return self.app_view.confirm_action(message)
-
-    def display_registration_form(self):
-        """Return the registration form data."""
-        return {
-            "name": self.name_field.value,
-            "email": self.email_field.value,
-            "password": self.password_field.value
-        }
-
-    def display_login_form(self):
-        """Return the login form data."""
-        return {
-            "email": self.email_field.value,
-            "password": self.password_field.value
-        }
