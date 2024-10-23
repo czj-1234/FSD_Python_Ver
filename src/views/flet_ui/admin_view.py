@@ -65,24 +65,64 @@ class AdminView(BaseView):
                 self.page.update()
 
         def handle_remove_student(e):
-            student_id = self.get_input("Enter student ID to remove")
-            if student_id:
-                self.page.show_loading = True
+            def handle_remove_confirm(e):
+                nonlocal student_id_field
+                dialog.open = False
                 self.page.update()
-                try:
-                    if self.admin_controller.remove_student(student_id):
-                        handle_show_students(None)  # Refresh list
-                finally:
-                    self.page.show_loading = False
+
+                student_id = student_id_field.value
+                if student_id:
+                    self.page.show_loading = True
                     self.page.update()
+                    try:
+                        # 直接调用 admin_controller 的 remove_student 方法
+                        if self.admin_controller.database.remove_student(student_id):
+                            self.display_success(f"Student {student_id} removed successfully!")
+                            # 刷新学生列表
+                            handle_show_students(None)
+                        else:
+                            self.display_error(f"Student {student_id} not found!")
+                    finally:
+                        self.page.show_loading = False
+                        self.page.update()
+
+            def handle_remove_cancel(e):
+                dialog.open = False
+                self.page.update()
+
+            # 创建输入字段
+            student_id_field = ft.TextField(
+                label="Student ID",
+                hint_text="Enter student ID to remove",
+                width=300
+            )
+
+            # 创建对话框
+            dialog = ft.AlertDialog(
+                modal=True,
+                title=ft.Text("Remove Student"),
+                content=ft.Column([
+                    ft.Text("Please enter the ID of the student to remove:"),
+                    student_id_field,
+                ], tight=True),
+                actions=[
+                    ft.TextButton("Cancel", on_click=handle_remove_cancel),
+                    ft.TextButton("Remove", on_click=handle_remove_confirm),
+                ],
+                actions_alignment=ft.MainAxisAlignment.END,
+            )
+
+            self.page.dialog = dialog
+            dialog.open = True
+            self.page.update()
 
         def handle_clear_database(e):
             if self.confirm_action("Are you sure you want to clear all data?"):
                 self.page.show_loading = True
                 self.page.update()
                 try:
-                    if self.admin_controller.clear_database():
-                        handle_show_students(None)  # Refresh list
+                    self.admin_controller.clear_database()
+                    handle_show_students(None)  # Refresh list
                 finally:
                     self.page.show_loading = False
                     self.page.update()
