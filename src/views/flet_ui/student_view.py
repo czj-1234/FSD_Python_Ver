@@ -87,18 +87,60 @@ class StudentView(BaseView):
             self.page.update()
 
         def handle_change_password(e):
-            new_password = self.get_input("Enter new password")
-            if new_password:
-                if not PASSWORD_PATTERN.match(new_password):
-                    self.display_error(
-                        "Invalid password format! Must start with uppercase, contain at least 5 letters followed by 3+ digits")
-                    return
+            def handle_cancel(e):
+                dlg.open = False
+                self.page.update()
 
-                self.current_student.password = new_password
-                if self.subject_controller.database.update_student(self.current_student):
-                    self.display_success("Password changed successfully!")
+            def handle_change_confirm(e):
+                dlg.open = False
+                new_password = password_field.value
+                if new_password:
+                    if not PASSWORD_PATTERN.match(new_password):
+                        self.display_error(
+                            "Invalid password format! Must start with uppercase, "
+                            "contain at least 5 letters followed by 3+ digits"
+                        )
+                        return
+
+                    # Update password in current student object
+                    self.current_student.password = new_password
+
+                    # Save to database
+                    if self.subject_controller.database.update_student(self.current_student):
+                        self.display_success("Password changed successfully!")
+                    else:
+                        self.display_error("Failed to update password in database!")
                 else:
-                    self.display_error("Failed to change password!")
+                    self.display_error("Password cannot be empty!")
+                self.page.update()
+
+            password_field = ft.TextField(
+                label="New Password",
+                hint_text="Start with uppercase, 5+ letters, 3+ digits",
+                password=True,
+                can_reveal_password=True,
+                width=300
+            )
+
+            dlg = ft.AlertDialog(
+                title=ft.Text("Change Password"),
+                content=ft.Column([
+                    ft.Text("Password Requirements:"),
+                    ft.Text("• Must start with an uppercase letter"),
+                    ft.Text("• Must contain at least 5 letters"),
+                    ft.Text("• Must end with 3 or more digits"),
+                    ft.Text("Example: Password123"),
+                    password_field
+                ]),
+                actions=[
+                    ft.TextButton("Cancel", on_click=handle_cancel),
+                    ft.TextButton("Change", on_click=handle_change_confirm),
+                ],
+            )
+
+            self.page.dialog = dlg
+            dlg.open = True
+            self.page.update()
 
         def handle_logout(e):
             self.app_view.navigate_to_login()
@@ -172,6 +214,7 @@ class StudentView(BaseView):
 
     def display_enrolment_result(self, subject):
         """Display the result of subject enrollment."""
+
         def close_dialog(e):
             self.page.dialog.open = False
             self.page.update()
