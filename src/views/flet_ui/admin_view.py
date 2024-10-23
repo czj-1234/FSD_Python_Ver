@@ -20,10 +20,16 @@ class AdminView(BaseView):
                 ft.DataColumn(ft.Text("ID")),
                 ft.DataColumn(ft.Text("Name")),
                 ft.DataColumn(ft.Text("Email")),
-                ft.DataColumn(ft.Text("Average Mark")),
+                ft.DataColumn(ft.Text("Average")),
                 ft.DataColumn(ft.Text("Status")),
                 ft.DataColumn(ft.Text("Subjects")),
             ],
+            column_spacing=20,
+            heading_row_height=40,
+            data_row_min_height=100,  # Minimum height for data rows
+            data_row_max_height=200,  # Maximum height for data rows
+            horizontal_margin=20,
+            horizontal_lines=ft.border.BorderSide(1, ft.colors.GREY_400),
             rows=[]
         )
 
@@ -81,7 +87,7 @@ class AdminView(BaseView):
             on_click=handle_back
         )
 
-        # Create layout
+        # Create layout with scrolling container for the table
         self.page.add(
             ft.Column(
                 controls=[
@@ -97,22 +103,116 @@ class AdminView(BaseView):
                         wrap=True,
                         spacing=10
                     ),
-                    self.student_list,
+                    ft.Container(
+                        content=self.student_list,
+                        padding=ft.padding.all(20),
+                        border=ft.border.all(1, ft.colors.GREY_400),
+                        border_radius=10,
+                        expand=True,  # Allow container to expand
+                        height=400  # Fixed height for scrolling
+                    ),
                     back_button
                 ],
-                spacing=20
+                spacing=20,
+                expand=True  # Allow column to expand
             )
         )
 
-    def _create_subject_text(self, student: Student) -> str:
-        """Create a formatted string of subject information."""
-        if not student.subjects:
-            return "No subjects"
+    def _format_subject_details(self, student: Student) -> ft.Container:
+        """Create a formatted container of subject information."""
+        subject_rows = []
 
-        subject_texts = []
-        for subject in student.subjects:
-            subject_texts.append(f"Subject {subject.id}: {subject.mark:.1f} ({subject.grade})")
-        return "\n".join(subject_texts)
+        if student.subjects:
+            for subject in student.subjects:
+                # Create row for each subject
+                subject_info = ft.Container(
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Container(
+                                content=ft.Text(
+                                    f"Subject {subject.id}",
+                                    weight=ft.FontWeight.BOLD,
+                                    size=14
+                                ),
+                                bgcolor=ft.colors.BLUE_GREY_50,
+                                padding=5,
+                                border_radius=3
+                            )
+                        ]),
+                        ft.Row([
+                            ft.Container(
+                                content=ft.Row([
+                                    ft.Text("Mark: "),
+                                    ft.Text(
+                                        f"{subject.mark:.1f}",
+                                        color=self._get_mark_color(subject.mark),
+                                        weight=ft.FontWeight.BOLD
+                                    )
+                                ]),
+                                padding=5
+                            ),
+                            ft.Container(
+                                content=ft.Row([
+                                    ft.Text("Grade: "),
+                                    ft.Text(
+                                        subject.grade,
+                                        color=self._get_grade_color(subject.grade),
+                                        weight=ft.FontWeight.BOLD
+                                    )
+                                ]),
+                                padding=5
+                            )
+                        ])
+                    ]),
+                    border=ft.border.all(1, ft.colors.GREY_300),
+                    border_radius=5,
+                    margin=ft.margin.only(bottom=5),
+                    padding=5
+                )
+                subject_rows.append(subject_info)
+        else:
+            subject_rows.append(
+                ft.Container(
+                    content=ft.Text(
+                        "No subjects enrolled",
+                        italic=True,
+                        color=ft.colors.GREY_700
+                    ),
+                    padding=10
+                )
+            )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=subject_rows,
+                spacing=5,
+                scroll=ft.ScrollMode.AUTO
+            ),
+            width=300  # Fixed width for subject column
+        )
+
+    def _get_mark_color(self, mark: float) -> str:
+        """Get color based on mark value."""
+        if mark >= 85:
+            return ft.colors.GREEN
+        elif mark >= 75:
+            return ft.colors.BLUE
+        elif mark >= 65:
+            return ft.colors.ORANGE
+        elif mark >= 50:
+            return ft.colors.ORANGE_700
+        return ft.colors.RED
+
+    def _get_grade_color(self, grade: str) -> str:
+        """Get color based on grade."""
+        grade_colors = {
+            'HD': ft.colors.GREEN,
+            'D': ft.colors.BLUE,
+            'C': ft.colors.ORANGE,
+            'P': ft.colors.ORANGE_700,
+            'Z': ft.colors.RED
+        }
+        return grade_colors.get(grade, ft.colors.BLACK)
 
     def display_all_students(self, students: List[Student]):
         """Display all students in the data table."""
@@ -123,21 +223,42 @@ class AdminView(BaseView):
             return
 
         for student in students:
+            avg_mark = student.get_average_mark()
+            is_passing = student.is_passing()
+
             self.student_list.rows.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(student.id)),
                         ft.DataCell(ft.Text(student.name)),
                         ft.DataCell(ft.Text(student.email)),
-                        ft.DataCell(ft.Text(f"{student.get_average_mark():.1f}")),
-                        ft.DataCell(ft.Text(
-                            "PASS" if student.is_passing() else "FAIL",
-                            color=ft.colors.GREEN if student.is_passing() else ft.colors.RED
-                        )),
-                        ft.DataCell(ft.Text(self._create_subject_text(student))),
+                        ft.DataCell(
+                            ft.Container(
+                                content=ft.Text(
+                                    f"{avg_mark:.1f}",
+                                    color=self._get_mark_color(avg_mark),
+                                    weight=ft.FontWeight.BOLD
+                                ),
+                                padding=5
+                            )
+                        ),
+                        ft.DataCell(
+                            ft.Container(
+                                content=ft.Text(
+                                    "PASS" if is_passing else "FAIL",
+                                    color=ft.colors.WHITE,
+                                    weight=ft.FontWeight.BOLD
+                                ),
+                                bgcolor=ft.colors.GREEN if is_passing else ft.colors.RED,
+                                padding=ft.padding.symmetric(horizontal=10, vertical=5),
+                                border_radius=3
+                            )
+                        ),
+                        ft.DataCell(self._format_subject_details(student)),
                     ]
                 )
             )
+
         self.page.update()
 
     def display_grade_groups(self, grade_groups: Dict[str, List[Student]]):
