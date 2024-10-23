@@ -75,10 +75,8 @@ class AdminView(BaseView):
                     self.page.show_loading = True
                     self.page.update()
                     try:
-                        # 直接调用 admin_controller 的 remove_student 方法
                         if self.admin_controller.database.remove_student(student_id):
                             self.display_success(f"Student {student_id} removed successfully!")
-                            # 刷新学生列表
                             handle_show_students(None)
                         else:
                             self.display_error(f"Student {student_id} not found!")
@@ -90,14 +88,12 @@ class AdminView(BaseView):
                 dialog.open = False
                 self.page.update()
 
-            # 创建输入字段
             student_id_field = ft.TextField(
                 label="Student ID",
                 hint_text="Enter student ID to remove",
                 width=300
             )
 
-            # 创建对话框
             dialog = ft.AlertDialog(
                 modal=True,
                 title=ft.Text("Remove Student"),
@@ -117,15 +113,52 @@ class AdminView(BaseView):
             self.page.update()
 
         def handle_clear_database(e):
-            if self.confirm_action("Are you sure you want to clear all data?"):
+            def handle_clear_confirm(e):
+                dialog.open = False
+                self.page.update()
+
                 self.page.show_loading = True
                 self.page.update()
                 try:
-                    self.admin_controller.clear_database()
-                    handle_show_students(None)  # Refresh list
+                    # 直接调用数据库的 clear_all 方法
+                    self.admin_controller.database.clear_all()
+                    self.display_success("Database cleared successfully!")
+                    # 清空显示的学生列表
+                    self.student_list.rows.clear()
+                    self.page.update()
+                except Exception as ex:
+                    self.display_error(f"Error clearing database: {str(ex)}")
                 finally:
                     self.page.show_loading = False
                     self.page.update()
+
+            def handle_clear_cancel(e):
+                dialog.open = False
+                self.page.update()
+
+            # 创建确认对话框
+            dialog = ft.AlertDialog(
+                modal=True,
+                title=ft.Text("Clear Database"),
+                content=ft.Text(
+                    "Are you sure you want to clear all data? This action cannot be undone!"
+                ),
+                actions=[
+                    ft.TextButton("Cancel", on_click=handle_clear_cancel),
+                    ft.TextButton(
+                        "Clear All",
+                        on_click=handle_clear_confirm,
+                        style=ft.ButtonStyle(
+                            color={"": ft.colors.RED}
+                        )
+                    ),
+                ],
+                actions_alignment=ft.MainAxisAlignment.END,
+            )
+
+            self.page.dialog = dialog
+            dialog.open = True
+            self.page.update()
 
         def handle_back(e):
             self.app_view.navigate_to_login()

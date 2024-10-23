@@ -12,5 +12,5 @@
 - [x] "Group by Grade"点击后无法通过"close"关闭窗口
 - [x] "Partition Pass/Fail"点击后无法通过"close"关闭窗口
 - [x] "Remove Student"无效
-- [ ] "Clear Database"无效
+- [x] "Clear Database"无效
 - [ ] 界面布局左上对齐，窗口大小无法调整
