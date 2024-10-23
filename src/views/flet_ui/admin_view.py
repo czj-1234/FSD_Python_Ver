@@ -1,5 +1,5 @@
 import flet as ft
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from ..base_view import BaseView
 from ...controllers.admin_controller import AdminController
@@ -26,8 +26,8 @@ class AdminView(BaseView):
             ],
             column_spacing=20,
             heading_row_height=40,
-            data_row_min_height=100,  # Minimum height for data rows
-            data_row_max_height=200,  # Maximum height for data rows
+            data_row_min_height=100,
+            data_row_max_height=200,
             horizontal_margin=20,
             horizontal_lines=ft.border.BorderSide(1, ft.colors.GREY_400),
             rows=[]
@@ -37,25 +37,55 @@ class AdminView(BaseView):
         """Display the admin view."""
 
         def handle_show_students(e):
-            students = self.admin_controller.database.load_all_students()
-            self.display_all_students(students)
+            self.page.show_loading = True
+            self.page.update()
+            try:
+                students = self.admin_controller.database.load_all_students()
+                self.display_all_students(students)
+            finally:
+                self.page.show_loading = False
+                self.page.update()
 
         def handle_group_students(e):
-            self.admin_controller.group_students()
+            self.page.show_loading = True
+            self.page.update()
+            try:
+                self.admin_controller.group_students()
+            finally:
+                self.page.show_loading = False
+                self.page.update()
 
         def handle_partition_students(e):
-            self.admin_controller.partition_students()
+            self.page.show_loading = True
+            self.page.update()
+            try:
+                self.admin_controller.partition_students()
+            finally:
+                self.page.show_loading = False
+                self.page.update()
 
         def handle_remove_student(e):
             student_id = self.get_input("Enter student ID to remove")
             if student_id:
-                if self.admin_controller.remove_student(student_id):
-                    handle_show_students(None)  # Refresh list
+                self.page.show_loading = True
+                self.page.update()
+                try:
+                    if self.admin_controller.remove_student(student_id):
+                        handle_show_students(None)  # Refresh list
+                finally:
+                    self.page.show_loading = False
+                    self.page.update()
 
         def handle_clear_database(e):
             if self.confirm_action("Are you sure you want to clear all data?"):
-                if self.admin_controller.clear_database():
-                    handle_show_students(None)  # Refresh list
+                self.page.show_loading = True
+                self.page.update()
+                try:
+                    if self.admin_controller.clear_database():
+                        handle_show_students(None)  # Refresh list
+                finally:
+                    self.page.show_loading = False
+                    self.page.update()
 
         def handle_back(e):
             self.app_view.navigate_to_login()
@@ -108,13 +138,13 @@ class AdminView(BaseView):
                         padding=ft.padding.all(20),
                         border=ft.border.all(1, ft.colors.GREY_400),
                         border_radius=10,
-                        expand=True,  # Allow container to expand
-                        height=400  # Fixed height for scrolling
+                        expand=True,
+                        height=400
                     ),
                     back_button
                 ],
                 spacing=20,
-                expand=True  # Allow column to expand
+                expand=True
             )
         )
 
@@ -124,7 +154,6 @@ class AdminView(BaseView):
 
         if student.subjects:
             for subject in student.subjects:
-                # Create row for each subject
                 subject_info = ft.Container(
                     content=ft.Column([
                         ft.Row([
@@ -188,7 +217,7 @@ class AdminView(BaseView):
                 spacing=5,
                 scroll=ft.ScrollMode.AUTO
             ),
-            width=300  # Fixed width for subject column
+            width=300
         )
 
     def _get_mark_color(self, mark: float) -> str:
@@ -222,50 +251,54 @@ class AdminView(BaseView):
             self.display_error("No students found")
             return
 
-        for student in students:
-            avg_mark = student.get_average_mark()
-            is_passing = student.is_passing()
+        try:
+            for student in students:
+                avg_mark = student.get_average_mark()
+                is_passing = student.is_passing()
 
-            self.student_list.rows.append(
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text(student.id)),
-                        ft.DataCell(ft.Text(student.name)),
-                        ft.DataCell(ft.Text(student.email)),
-                        ft.DataCell(
-                            ft.Container(
-                                content=ft.Text(
-                                    f"{avg_mark:.1f}",
-                                    color=self._get_mark_color(avg_mark),
-                                    weight=ft.FontWeight.BOLD
-                                ),
-                                padding=5
-                            )
-                        ),
-                        ft.DataCell(
-                            ft.Container(
-                                content=ft.Text(
-                                    "PASS" if is_passing else "FAIL",
-                                    color=ft.colors.WHITE,
-                                    weight=ft.FontWeight.BOLD
-                                ),
-                                bgcolor=ft.colors.GREEN if is_passing else ft.colors.RED,
-                                padding=ft.padding.symmetric(horizontal=10, vertical=5),
-                                border_radius=3
-                            )
-                        ),
-                        ft.DataCell(self._format_subject_details(student)),
-                    ]
+                self.student_list.rows.append(
+                    ft.DataRow(
+                        cells=[
+                            ft.DataCell(ft.Text(student.id)),
+                            ft.DataCell(ft.Text(student.name)),
+                            ft.DataCell(ft.Text(student.email)),
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(
+                                        f"{avg_mark:.1f}",
+                                        color=self._get_mark_color(avg_mark),
+                                        weight=ft.FontWeight.BOLD
+                                    ),
+                                    padding=5
+                                )
+                            ),
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(
+                                        "PASS" if is_passing else "FAIL",
+                                        color=ft.colors.WHITE,
+                                        weight=ft.FontWeight.BOLD
+                                    ),
+                                    bgcolor=ft.colors.GREEN if is_passing else ft.colors.RED,
+                                    padding=ft.padding.symmetric(horizontal=10, vertical=5),
+                                    border_radius=3
+                                )
+                            ),
+                            ft.DataCell(self._format_subject_details(student)),
+                        ]
+                    )
                 )
-            )
-
-        self.page.update()
+        except Exception as e:
+            self.display_error(f"Error displaying students: {str(e)}")
+        finally:
+            self.page.update()
 
     def display_grade_groups(self, grade_groups: Dict[str, List[Student]]):
         """Display students grouped by grade."""
+        dialog = None
 
         def close_dialog(e):
-            dlg.open = False
+            dialog.open = False
             self.page.update()
 
         content = ft.Column(
@@ -275,64 +308,69 @@ class AdminView(BaseView):
             height=400
         )
 
-        # Sort grades in a specific order: HD, D, C, P, Z
-        grade_order = ['HD', 'D', 'C', 'P', 'Z']
+        try:
+            # Sort grades in a specific order: HD, D, C, P, Z
+            grade_order = ['HD', 'D', 'C', 'P', 'Z']
 
-        for grade in grade_order:
-            if grade in grade_groups and grade_groups[grade]:
-                # Add grade header
-                content.controls.append(
-                    ft.Container(
-                        content=ft.Text(
-                            f"Grade {grade}",
-                            size=18,
-                            weight=ft.FontWeight.BOLD
-                        ),
-                        bgcolor=ft.colors.BLUE_GREY_100,
-                        padding=10,
-                        border_radius=5
+            for grade in grade_order:
+                if grade in grade_groups and grade_groups[grade]:
+                    # Add grade header
+                    content.controls.append(
+                        ft.Container(
+                            content=ft.Text(
+                                f"Grade {grade}",
+                                size=18,
+                                weight=ft.FontWeight.BOLD
+                            ),
+                            bgcolor=ft.colors.BLUE_GREY_100,
+                            padding=10,
+                            border_radius=5
+                        )
                     )
-                )
 
-                # Add students in this grade group
-                for student in grade_groups[grade]:
-                    student_info = ft.Container(
-                        content=ft.Column([
-                            ft.Text(f"ID: {student.id}", weight=ft.FontWeight.BOLD),
-                            ft.Text(f"Name: {student.name}"),
-                            ft.Text(f"Email: {student.email}"),
-                            ft.Text(f"Average Mark: {student.get_average_mark():.1f}"),
-                            ft.Text("Subjects:", weight=ft.FontWeight.BOLD),
-                            ft.Column([
-                                ft.Text(
-                                    f"  Subject {subject.id}: Mark = {subject.mark:.1f}, Grade = {subject.grade}"
-                                ) for subject in student.subjects
-                            ], spacing=2)
-                        ]),
-                        padding=10,
-                        border=ft.border.all(1, ft.colors.GREY_400),
-                        border_radius=5,
-                        margin=ft.margin.only(bottom=10)
-                    )
-                    content.controls.append(student_info)
+                    # Add students in this grade group
+                    for student in grade_groups[grade]:
+                        student_info = ft.Container(
+                            content=ft.Column([
+                                ft.Text(f"ID: {student.id}", weight=ft.FontWeight.BOLD),
+                                ft.Text(f"Name: {student.name}"),
+                                ft.Text(f"Email: {student.email}"),
+                                ft.Text(f"Average Mark: {student.get_average_mark():.1f}"),
+                                ft.Text("Subjects:", weight=ft.FontWeight.BOLD),
+                                ft.Column([
+                                    ft.Text(
+                                        f"  Subject {subject.id}: Mark = {subject.mark:.1f}, Grade = {subject.grade}"
+                                    ) for subject in student.subjects
+                                ], spacing=2)
+                            ]),
+                            padding=10,
+                            border=ft.border.all(1, ft.colors.GREY_400),
+                            border_radius=5,
+                            margin=ft.margin.only(bottom=10)
+                        )
+                        content.controls.append(student_info)
 
-        dlg = ft.AlertDialog(
-            title=ft.Text("Grade Groups"),
-            content=content,
-            actions=[
-                ft.TextButton("Close", on_click=close_dialog)
-            ],
-        )
+            dialog = ft.AlertDialog(
+                title=ft.Text("Grade Groups"),
+                content=content,
+                actions=[
+                    ft.TextButton("Close", on_click=close_dialog)
+                ],
+            )
 
-        self.page.dialog = dlg
-        dlg.open = True
-        self.page.update()
+            self.page.dialog = dialog
+            dialog.open = True
+            self.page.update()
+
+        except Exception as e:
+            self.display_error(f"Error displaying grade groups: {str(e)}")
 
     def display_partitioned_students(self, passing: List[Student], failing: List[Student]):
         """Display students partitioned by pass/fail status."""
+        dialog = None
 
         def close_dialog(e):
-            dlg.open = False
+            dialog.open = False
             self.page.update()
 
         content = ft.Column(
@@ -342,65 +380,69 @@ class AdminView(BaseView):
             height=400
         )
 
-        # Helper function to create student info container
-        def create_student_container(student: Student, status: str):
-            return ft.Container(
-                content=ft.Column([
-                    ft.Text(f"ID: {student.id}", weight=ft.FontWeight.BOLD),
-                    ft.Text(f"Name: {student.name}"),
-                    ft.Text(f"Email: {student.email}"),
-                    ft.Text(
-                        f"Average Mark: {student.get_average_mark():.1f}",
-                        color=ft.colors.GREEN if status == "Passing" else ft.colors.RED
-                    ),
-                    ft.Text("Subjects:", weight=ft.FontWeight.BOLD),
-                    ft.Column([
+        try:
+            # Helper function to create student info container
+            def create_student_container(student: Student, status: str):
+                return ft.Container(
+                    content=ft.Column([
+                        ft.Text(f"ID: {student.id}", weight=ft.FontWeight.BOLD),
+                        ft.Text(f"Name: {student.name}"),
+                        ft.Text(f"Email: {student.email}"),
                         ft.Text(
-                            f"  Subject {subject.id}: Mark = {subject.mark:.1f}, Grade = {subject.grade}"
-                        ) for subject in student.subjects
-                    ], spacing=2)
-                ]),
-                padding=10,
-                border=ft.border.all(1, ft.colors.GREY_400),
-                border_radius=5,
-                margin=ft.margin.only(bottom=10)
+                            f"Average Mark: {student.get_average_mark():.1f}",
+                            color=ft.colors.GREEN if status == "Passing" else ft.colors.RED
+                        ),
+                        ft.Text("Subjects:", weight=ft.FontWeight.BOLD),
+                        ft.Column([
+                            ft.Text(
+                                f"  Subject {subject.id}: Mark = {subject.mark:.1f}, Grade = {subject.grade}"
+                            ) for subject in student.subjects
+                        ], spacing=2)
+                    ]),
+                    padding=10,
+                    border=ft.border.all(1, ft.colors.GREY_400),
+                    border_radius=5,
+                    margin=ft.margin.only(bottom=10)
+                )
+
+            # Add passing students
+            content.controls.append(
+                ft.Container(
+                    content=ft.Text("Passing Students", size=18, weight=ft.FontWeight.BOLD),
+                    bgcolor=ft.colors.GREEN_100,
+                    padding=10,
+                    border_radius=5
+                )
+            )
+            for student in passing:
+                content.controls.append(create_student_container(student, "Passing"))
+
+            # Add failing students
+            content.controls.append(
+                ft.Container(
+                    content=ft.Text("Failing Students", size=18, weight=ft.FontWeight.BOLD),
+                    bgcolor=ft.colors.RED_100,
+                    padding=10,
+                    border_radius=5
+                )
+            )
+            for student in failing:
+                content.controls.append(create_student_container(student, "Failing"))
+
+            dialog = ft.AlertDialog(
+                title=ft.Text("Pass/Fail Partition"),
+                content=content,
+                actions=[
+                    ft.TextButton("Close", on_click=close_dialog)
+                ],
             )
 
-        # Add passing students
-        content.controls.append(
-            ft.Container(
-                content=ft.Text("Passing Students", size=18, weight=ft.FontWeight.BOLD),
-                bgcolor=ft.colors.GREEN_100,
-                padding=10,
-                border_radius=5
-            )
-        )
-        for student in passing:
-            content.controls.append(create_student_container(student, "Passing"))
+            self.page.dialog = dialog
+            dialog.open = True
+            self.page.update()
 
-        # Add failing students
-        content.controls.append(
-            ft.Container(
-                content=ft.Text("Failing Students", size=18, weight=ft.FontWeight.BOLD),
-                bgcolor=ft.colors.RED_100,
-                padding=10,
-                border_radius=5
-            )
-        )
-        for student in failing:
-            content.controls.append(create_student_container(student, "Failing"))
-
-        dlg = ft.AlertDialog(
-            title=ft.Text("Pass/Fail Partition"),
-            content=content,
-            actions=[
-                ft.TextButton("Close", on_click=close_dialog)
-            ],
-        )
-
-        self.page.dialog = dlg
-        dlg.open = True
-        self.page.update()
+        except Exception as e:
+            self.display_error(f"Error displaying partitioned students: {str(e)}")
 
     def display_error(self, message: str):
         """Display error message."""
