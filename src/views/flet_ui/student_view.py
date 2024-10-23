@@ -130,6 +130,10 @@ class StudentView(BaseView):
 
     def display_enrolment_result(self, subject):
         """Display the result of subject enrollment."""
+        def close_dialog(e):
+            self.page.dialog.open = False
+            self.page.update()
+
         content = ft.Column(
             controls=[
                 ft.Text("Subject Enrollment Result", size=20),
@@ -144,7 +148,7 @@ class StudentView(BaseView):
             title=ft.Text("Enrollment Successful"),
             content=content,
             actions=[
-                ft.TextButton("Close", on_click=lambda e: setattr(self.page.dialog, 'open', False))
+                ft.TextButton("Close", on_click=close_dialog)
             ],
         )
         self.page.dialog.open = True
