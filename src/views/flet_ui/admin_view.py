@@ -122,9 +122,14 @@ class AdminView(BaseView):
 
     def display_grade_groups(self, grade_groups: Dict[str, List[Student]]):
         """Display students grouped by grade."""
+        def close_dialog(e):
+            dlg.open = False
+            self.page.update()
+
         content = ft.Column(
             controls=[ft.Text("Students Grouped by Grade", size=20)],
-            scroll=ft.ScrollMode.AUTO
+            scroll=ft.ScrollMode.AUTO,
+            spacing=10
         )
 
         for grade, students in sorted(grade_groups.items()):
@@ -137,24 +142,31 @@ class AdminView(BaseView):
                 )
                 content.controls.append(student_text)
 
-        self.page.dialog = ft.AlertDialog(
+        dlg = ft.AlertDialog(
             title=ft.Text("Grade Groups"),
             content=content,
             actions=[
-                ft.TextButton("Close", on_click=lambda e: setattr(self.page.dialog, 'open', False))
+                ft.TextButton("Close", on_click=close_dialog)
             ],
         )
-        self.page.dialog.open = True
+
+        self.page.dialog = dlg
+        dlg.open = True
         self.page.update()
 
     def display_partitioned_students(self, passing: List[Student], failing: List[Student]):
         """Display students partitioned by pass/fail status."""
+        def close_dialog(e):
+            dlg.open = False
+            self.page.update()
+
         content = ft.Column(
             controls=[
                 ft.Text("Students by Pass/Fail Status", size=20),
                 ft.Text("\nPassing Students:", weight=ft.FontWeight.BOLD)
             ],
-            scroll=ft.ScrollMode.AUTO
+            scroll=ft.ScrollMode.AUTO,
+            spacing=10
         )
 
         for student in passing:
@@ -169,14 +181,16 @@ class AdminView(BaseView):
                 f"  {student.name} (ID: {student.id}) - {student.get_average_mark():.1f}%"
             ))
 
-        self.page.dialog = ft.AlertDialog(
+        dlg = ft.AlertDialog(
             title=ft.Text("Pass/Fail Partition"),
             content=content,
             actions=[
-                ft.TextButton("Close", on_click=lambda e: setattr(self.page.dialog, 'open', False))
+                ft.TextButton("Close", on_click=close_dialog)
             ],
         )
-        self.page.dialog.open = True
+
+        self.page.dialog = dlg
+        dlg.open = True
         self.page.update()
 
     def display_error(self, message: str):
