@@ -33,6 +33,29 @@ class AdminView(BaseView):
             rows=[]
         )
 
+    def _get_mark_color(self, mark: float) -> str:
+        """Get color based on mark value."""
+        if mark >= 85:
+            return ft.colors.GREEN
+        elif mark >= 75:
+            return ft.colors.BLUE
+        elif mark >= 65:
+            return ft.colors.ORANGE
+        elif mark >= 50:
+            return ft.colors.ORANGE_700
+        return ft.colors.RED
+
+    def _get_grade_color(self, grade: str) -> str:
+        """Get color based on grade."""
+        grade_colors = {
+            'HD': ft.colors.GREEN,
+            'D': ft.colors.BLUE,
+            'C': ft.colors.ORANGE,
+            'P': ft.colors.ORANGE_700,
+            'Z': ft.colors.RED
+        }
+        return grade_colors.get(grade, ft.colors.BLACK)
+
     def display(self, data=None):
         """Display the admin view."""
 
@@ -120,10 +143,8 @@ class AdminView(BaseView):
                 self.page.show_loading = True
                 self.page.update()
                 try:
-                    # 直接调用数据库的 clear_all 方法
                     self.admin_controller.database.clear_all()
                     self.display_success("Database cleared successfully!")
-                    # 清空显示的学生列表
                     self.student_list.rows.clear()
                     self.page.update()
                 except Exception as ex:
@@ -136,7 +157,6 @@ class AdminView(BaseView):
                 dialog.open = False
                 self.page.update()
 
-            # 创建确认对话框
             dialog = ft.AlertDialog(
                 modal=True,
                 title=ft.Text("Clear Database"),
@@ -163,7 +183,6 @@ class AdminView(BaseView):
         def handle_back(e):
             self.app_view.navigate_to_login()
 
-        # Create buttons
         show_button = ft.ElevatedButton(
             text="Show All Students",
             on_click=handle_show_students
@@ -190,36 +209,172 @@ class AdminView(BaseView):
             on_click=handle_back
         )
 
-        # Create layout with scrolling container for the table
-        self.page.add(
-            ft.Column(
-                controls=[
-                    ft.Text("Admin Dashboard", size=30),
-                    ft.Row(
-                        controls=[
-                            show_button,
-                            group_button,
-                            partition_button,
-                            remove_button,
-                            clear_button,
-                        ],
-                        wrap=True,
-                        spacing=10
-                    ),
-                    ft.Container(
-                        content=self.student_list,
-                        padding=ft.padding.all(20),
-                        border=ft.border.all(1, ft.colors.GREY_400),
-                        border_radius=10,
-                        expand=True,
-                        height=400
-                    ),
-                    back_button
-                ],
-                spacing=20,
-                expand=True
-            )
+        # 设置表格列的宽度和对齐方式
+        self.student_list = ft.DataTable(
+            columns=[
+                ft.DataColumn(ft.Text("ID"), numeric=False),
+                ft.DataColumn(ft.Text("Name"), numeric=False),
+                ft.DataColumn(ft.Text("Email"), numeric=False),
+                ft.DataColumn(ft.Text("Average"), numeric=True),
+                ft.DataColumn(ft.Text("Status"), numeric=False),
+                ft.DataColumn(ft.Text("Subjects"), numeric=False),
+            ],
+            column_spacing=20,
+            heading_row_height=40,
+            data_row_min_height=100,
+            data_row_max_height=200,
+            horizontal_margin=20,
+            horizontal_lines=ft.border.BorderSide(1, ft.colors.GREY_400),
+            rows=[],
         )
+
+        # 创建可滚动的表格容器
+        table_container = ft.Container(
+            content=self.student_list,
+            padding=ft.padding.all(20),
+            border=ft.border.all(1, ft.colors.GREY_400),
+            border_radius=10,
+            expand=True,
+            alignment=ft.alignment.center,  # 容器内容居中
+        )
+
+        # 创建按钮行
+        button_row = ft.Container(
+            content=ft.Row(
+                controls=[
+                    show_button,
+                    group_button,
+                    partition_button,
+                    remove_button,
+                    clear_button,
+                ],
+                wrap=True,
+                spacing=10,
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
+            alignment=ft.alignment.center,
+            padding=ft.padding.only(bottom=20),
+        )
+
+        # 创建主内容列
+        main_column = ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Text(
+                        "Admin Dashboard",
+                        size=30,
+                        weight=ft.FontWeight.BOLD,
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    alignment=ft.alignment.center,
+                    padding=ft.padding.only(bottom=20),
+                ),
+                button_row,
+                ft.Container(
+                    content=ft.Column(
+                        controls=[table_container],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        scroll=ft.ScrollMode.AUTO,
+                        expand=True,
+                    ),
+                    expand=True,
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(
+                    content=back_button,
+                    alignment=ft.alignment.center,
+                    padding=ft.padding.only(top=20),
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+            expand=True,
+        )
+
+        # 创建主容器
+        main_content = ft.Container(
+            content=main_column,
+            expand=True,
+            alignment=ft.alignment.center,
+            padding=ft.padding.all(20),
+            width=1200,  # 设置一个合适的固定宽度
+        )
+
+        # 更新主容器内容
+        if hasattr(self.app_view, 'main_container'):
+            self.app_view.main_container.content = main_content
+        else:
+            self.page.clean()
+            self.page.add(main_content)
+
+        self.page.update()
+
+    def display_all_students(self, students: List[Student]):
+        """Display all students in the data table."""
+        self.student_list.rows.clear()
+
+        if not students:
+            self.display_error("No students found")
+            return
+
+        try:
+            for student in students:
+                avg_mark = student.get_average_mark()
+                is_passing = student.is_passing()
+
+                self.student_list.rows.append(
+                    ft.DataRow(
+                        cells=[
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(student.id),
+                                    padding=ft.padding.all(5),
+                                )
+                            ),
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(student.name),
+                                    padding=ft.padding.all(5),
+                                )
+                            ),
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(student.email),
+                                    padding=ft.padding.all(5),
+                                )
+                            ),
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(
+                                        f"{avg_mark:.1f}",
+                                        color=self._get_mark_color(avg_mark),
+                                        weight=ft.FontWeight.BOLD
+                                    ),
+                                    padding=ft.padding.all(5),
+                                )
+                            ),
+                            ft.DataCell(
+                                ft.Container(
+                                    content=ft.Text(
+                                        "PASS" if is_passing else "FAIL",
+                                        color=ft.colors.WHITE,
+                                        weight=ft.FontWeight.BOLD
+                                    ),
+                                    bgcolor=ft.colors.GREEN if is_passing else ft.colors.RED,
+                                    padding=ft.padding.symmetric(horizontal=10, vertical=5),
+                                    border_radius=3,
+                                    alignment=ft.alignment.center,
+                                )
+                            ),
+                            ft.DataCell(self._format_subject_details(student)),
+                        ]
+                    )
+                )
+
+        except Exception as e:
+            self.display_error(f"Error displaying students: {str(e)}")
+        finally:
+            self.page.update()
 
     def _format_subject_details(self, student: Student) -> ft.Container:
         """Create a formatted container of subject information."""
@@ -292,79 +447,6 @@ class AdminView(BaseView):
             ),
             width=300
         )
-
-    def _get_mark_color(self, mark: float) -> str:
-        """Get color based on mark value."""
-        if mark >= 85:
-            return ft.colors.GREEN
-        elif mark >= 75:
-            return ft.colors.BLUE
-        elif mark >= 65:
-            return ft.colors.ORANGE
-        elif mark >= 50:
-            return ft.colors.ORANGE_700
-        return ft.colors.RED
-
-    def _get_grade_color(self, grade: str) -> str:
-        """Get color based on grade."""
-        grade_colors = {
-            'HD': ft.colors.GREEN,
-            'D': ft.colors.BLUE,
-            'C': ft.colors.ORANGE,
-            'P': ft.colors.ORANGE_700,
-            'Z': ft.colors.RED
-        }
-        return grade_colors.get(grade, ft.colors.BLACK)
-
-    def display_all_students(self, students: List[Student]):
-        """Display all students in the data table."""
-        self.student_list.rows.clear()
-
-        if not students:
-            self.display_error("No students found")
-            return
-
-        try:
-            for student in students:
-                avg_mark = student.get_average_mark()
-                is_passing = student.is_passing()
-
-                self.student_list.rows.append(
-                    ft.DataRow(
-                        cells=[
-                            ft.DataCell(ft.Text(student.id)),
-                            ft.DataCell(ft.Text(student.name)),
-                            ft.DataCell(ft.Text(student.email)),
-                            ft.DataCell(
-                                ft.Container(
-                                    content=ft.Text(
-                                        f"{avg_mark:.1f}",
-                                        color=self._get_mark_color(avg_mark),
-                                        weight=ft.FontWeight.BOLD
-                                    ),
-                                    padding=5
-                                )
-                            ),
-                            ft.DataCell(
-                                ft.Container(
-                                    content=ft.Text(
-                                        "PASS" if is_passing else "FAIL",
-                                        color=ft.colors.WHITE,
-                                        weight=ft.FontWeight.BOLD
-                                    ),
-                                    bgcolor=ft.colors.GREEN if is_passing else ft.colors.RED,
-                                    padding=ft.padding.symmetric(horizontal=10, vertical=5),
-                                    border_radius=3
-                                )
-                            ),
-                            ft.DataCell(self._format_subject_details(student)),
-                        ]
-                    )
-                )
-        except Exception as e:
-            self.display_error(f"Error displaying students: {str(e)}")
-        finally:
-            self.page.update()
 
     def display_grade_groups(self, grade_groups: Dict[str, List[Student]]):
         """Display students grouped by grade."""

@@ -143,16 +143,26 @@ class StudentView(BaseView):
             self.page.update()
 
         def handle_logout(e):
+            # 清理当前学生状态
+            self.current_student = None
+            self.subject_controller.current_student = None
+
+            # 返回登录页面
             self.app_view.navigate_to_login()
 
-        # Create layout
-        self.page.clean()
-        self.page.add(
-            ft.Column(
-                controls=[
-                    ft.Text(f"Welcome, {student.name}!", size=30),
-                    ft.Text(f"Student ID: {student.id}"),
-                    ft.Row(
+        # Create main content
+        content = ft.Column(
+            controls=[
+                ft.Container(
+                    content=ft.Text(f"Welcome, {student.name}!", size=30),
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(
+                    content=ft.Text(f"Student ID: {student.id}", size=16),
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(
+                    content=ft.Row(
                         controls=[
                             ft.ElevatedButton(
                                 text="Enroll in Subject",
@@ -167,20 +177,45 @@ class StudentView(BaseView):
                                 on_click=handle_change_password
                             ),
                         ],
+                        alignment=ft.MainAxisAlignment.CENTER,
                         spacing=10
                     ),
-                    ft.Text("Enrolled Subjects:", size=20),
-                    self.subjects_table,
-                    ft.TextButton(
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(
+                    content=ft.Text("Enrolled Subjects:", size=20),
+                    alignment=ft.alignment.center,
+                ),
+                ft.Container(
+                    content=self.subjects_table,
+                    alignment=ft.alignment.center,
+                    padding=20,
+                ),
+                ft.Container(
+                    content=ft.TextButton(
                         text="Logout",
                         on_click=handle_logout
-                    )
-                ],
-                spacing=20
-            )
+                    ),
+                    alignment=ft.alignment.center,
+                )
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=20,
         )
 
+        # Update main container content
+        if hasattr(self.app_view, 'main_container'):
+            self.app_view.main_container.content = ft.Container(
+                content=content,
+                expand=True,
+                alignment=ft.alignment.center,
+            )
+        else:
+            self.page.clean()
+            self.page.add(content)
+
         self._refresh_subjects()
+        self.page.update()
 
     def _refresh_subjects(self):
         """Refresh the subjects table."""
@@ -205,7 +240,12 @@ class StudentView(BaseView):
                     cells=[
                         ft.DataCell(ft.Text("Average", italic=True)),
                         ft.DataCell(ft.Text(f"{avg_mark:.1f}", italic=True)),
-                        ft.DataCell(ft.Text(status, color=ft.colors.GREEN if status == "PASS" else ft.colors.RED)),
+                        ft.DataCell(
+                            ft.Text(
+                                status,
+                                color=ft.colors.GREEN if status == "PASS" else ft.colors.RED
+                            )
+                        ),
                     ]
                 )
             )
