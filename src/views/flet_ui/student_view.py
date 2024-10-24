@@ -1,10 +1,11 @@
-import flet as ft
 from typing import Optional
 
-from ..base_view import BaseView
-from ...controllers.subject_controller import SubjectController
-from ...models.student import Student
-from ...core.constants import PASSWORD_PATTERN
+import flet as ft
+
+from src.controllers.subject_controller import SubjectController
+from src.core.constants import PASSWORD_PATTERN
+from src.models.student import Student
+from src.views.base_view import BaseView
 
 
 class StudentView(BaseView):

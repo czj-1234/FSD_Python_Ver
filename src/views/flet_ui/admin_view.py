@@ -1,9 +1,10 @@
-import flet as ft
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-from ..base_view import BaseView
-from ...controllers.admin_controller import AdminController
-from ...models.student import Student
+import flet as ft
+
+from src.controllers.admin_controller import AdminController
+from src.models.student import Student
+from src.views.base_view import BaseView
 
 
 class AdminView(BaseView):

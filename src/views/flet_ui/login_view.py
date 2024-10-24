@@ -1,8 +1,9 @@
 import flet as ft
-from ..base_view import BaseView
-from ...controllers.student_controller import StudentController
-from ...models.database import Database
-from ...models.student import Student
+
+from src.controllers.student_controller import StudentController
+from src.models.database import Database
+from src.models.student import Student
+from src.views.base_view import BaseView
 
 
 class LoginView(BaseView):
