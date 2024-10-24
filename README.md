@@ -1,6 +1,6 @@
 # FSD_Python_Ver
 
-> FSD 作业的 75% 实现，目前 CLI 完全可用，GUI 还有一点小问题，在 Debug 阶段
+> FSD 作业的 100% 实现，目前 CLI & GUI 完全可用。
 
 ## 架构说明
 
