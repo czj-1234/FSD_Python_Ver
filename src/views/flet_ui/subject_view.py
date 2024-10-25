@@ -1,9 +1,8 @@
 import flet as ft
-from typing import Optional
 
-from ..base_view import BaseView
-from ...models.student import Student
-from ...models.subject import Subject
+from src.models.student import Student
+from src.models.subject import Subject
+from src.views.base_view import BaseView
 
 
 class SubjectView(BaseView):

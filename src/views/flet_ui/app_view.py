@@ -1,11 +1,12 @@
-import flet as ft
 from typing import Optional
 
-from .login_view import LoginView
-from .admin_view import AdminView
-from .student_view import StudentView
-from ..base_view import BaseView
-from ...models.student import Student
+import flet as ft
+
+from src.models.student import Student
+from src.views.base_view import BaseView
+from src.views.flet_ui.admin_view import AdminView
+from src.views.flet_ui.login_view import LoginView
+from src.views.flet_ui.student_view import StudentView
 
 
 class AppView(BaseView):
