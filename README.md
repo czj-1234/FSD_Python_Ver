@@ -26,3 +26,11 @@
 需安装依赖：`pip install -r requirements.txt`（请在 Pycharm 虚拟环境内安装）
 
 运行入口函数`cli_main.py`（CLI）和`flet_main.py`（GUI）其一即可
+
+## TODO
+
+- [ ] 测试代码
+- [ ] Flet 构建
+- [ ] Github Action 自动化
+- [ ] 异常处理优化
+- [ ] 注释优化
