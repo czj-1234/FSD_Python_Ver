@@ -6,6 +6,14 @@ from src.views.base_view import BaseView
 class AdminCliView(BaseView):
     """CLI view for admin-related operations."""
 
+# Display the management system menu:
+    # (c) Clear database: Clear all data
+    # (g) Group students: Group students by grade
+    # (p) Group students by pass/fail
+    # (r) Delete students: Delete by ID
+    # (s) Show all students
+    # (x) Exit the system
+# 显示管理系统菜单：(c) 清空数据库：清除所有数据(g) 分组学生：按成绩分组(p) 划分学生：按通过/失败划分(r) 删除学生：按ID删除(s) 显示所有学生(x) 退出系统
     def display(self, data: Any = None):
         print("\nAdmin System")
         print("-" * 50)
@@ -16,19 +24,22 @@ class AdminCliView(BaseView):
         print("(s) show: Show all students")
         print("(x) exit")
         print("-" * 50)
-
+    # 格式化部分标题
+    # Format section titles
+    """Format a section header."""
     def _format_header(self, title: str):
-        """Format a section header."""
         print(f"\n{title}")
         print("=" * 50)
 
+    # 以格式化方式显示学生信息
+    """Display student information in a formatted way."""
     def _display_student_info(self, student):
-        """Display student information in a formatted way."""
         # Basic information
         print(f"Student ID: {student.id}")
         print(f"Name: {student.name}")
         print(f"Email: {student.email}")
 
+        #科目信息
         # Subject information
         if student.subjects:
             print("\nEnrolled Subjects:")
@@ -44,8 +55,9 @@ class AdminCliView(BaseView):
             print("\nNo subjects enrolled")
         print("\n" + "-" * 50)
 
-    def display_all_students(self, students: List[Any]):
+        # 显示系统中所有的学生。
         """Display all students in the system."""
+    def display_all_students(self, students: List[Any]):
         if not students:
             print("\nNo students found.")
             return
@@ -54,14 +66,15 @@ class AdminCliView(BaseView):
         for student in students:
             self._display_student_info(student)
 
-    def display_grade_groups(self, groups: Dict[str, List[Any]]):
+        # 显示学生按年级分组
         """Display students grouped by grade."""
+    def display_grade_groups(self, groups: Dict[str, List[Any]]):
         if not groups:
             print("\nNo students found.")
             return
 
         self._format_header("Students Grouped by Average Grade")
-
+        # 按特定顺序显示组
         # Display groups in specific order
         grade_order = ['HD', 'D', 'C', 'P', 'Z']
         for grade in grade_order:
@@ -73,6 +86,7 @@ class AdminCliView(BaseView):
                     self._display_student_info(student)
 
     def display_partitioned_students(self, passing: List[Any], failing: List[Any]):
+        # 显示学生通过/不通过状态。
         """Display students partitioned by pass/fail status."""
         self._format_header("Student Pass/Fail Partition")
 

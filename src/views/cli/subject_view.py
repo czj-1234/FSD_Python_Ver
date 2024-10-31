@@ -8,6 +8,8 @@ from src.views.cli.base_cli_view import BaseCliView
 class SubjectCliView(BaseCliView):
     """CLI view for subject-related operations."""
 
+    # Show the course system
+    # 显示课程系统
     def display(self, data: Any = None):
         self.display_header("Subject Enrolment System")
         self.display_menu(
@@ -22,6 +24,7 @@ class SubjectCliView(BaseCliView):
 
     def display_subjects(self, student: Student):
         """Display student's enrolled subjects."""
+        # 显示学生的注册科目。
         if not student.subjects:
             print("No subjects enrolled.")
             return
@@ -36,6 +39,7 @@ class SubjectCliView(BaseCliView):
 
     def display_enrolment_result(self, subject: Subject):
         """Display result of subject enrolment."""
+        # 显示受试者登记结果。
         print(f"Successfully enrolled in subject {subject.id}")
         print(f"Mark: {subject.mark:.1f}")
         print(f"Grade: {subject.grade}")

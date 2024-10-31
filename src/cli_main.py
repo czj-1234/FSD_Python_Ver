@@ -1,3 +1,4 @@
+
 import sys
 from pathlib import Path
 
@@ -15,16 +16,19 @@ def setup_environment():
 
 def main():
     """Main entry point for the CLI application."""
+    # CLI应用程序的主入口点。
     try:
         data_dir = setup_environment()
 
         # Import after environment setup
+        # 环境设置后导入
         from src.controllers.university_controller import UniversityController
         from src.models.database import Database
 
         # Set database file path relative to src directory
         Database.DEFAULT_PATH = "students.data"  # 文件将直接在 src 目录下创建
 
+        # 运行应用
         # Run application
         controller = UniversityController()
         controller.run()

@@ -6,7 +6,9 @@ from src.views.cli.base_cli_view import BaseCliView
 
 class StudentCliView(BaseCliView):
     """CLI view for student-related operations."""
+    # 提供通用显示功能的CLI视图的基类。
 
+    # Show student system
     def display(self, data: Any = None):
         self.display_header("Student System")
         self.display_menu([("l", "login"), ("r", "register"), ("x", "exit")])
